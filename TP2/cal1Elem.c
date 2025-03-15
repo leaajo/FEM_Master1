@@ -20,9 +20,10 @@ void cal1Elem(int nRefDom,
     int q;
     q = nppquad(typeEl);
 
-    // calcul de xhat et omeka k
+    // calcul de xhat et omega k
     float **xhat;  xhat = alloctab(q,2);
-    float *omegak; 
+    float *omegak; omegak = alloctab(q);
+
     ppquad(typeEl ,q, omegak, xhat);
 
     // à l'intérieur du domaine :

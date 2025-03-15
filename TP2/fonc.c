@@ -7,13 +7,13 @@ int nppquad(int t){
     return 3;
 }
 
-void ppquad(int t, int q, float *wk, float **xk){
+void ppquad(int t, int q, float *omegak, float **xk){
     float a = 1./36; float b = 1./9; float c = 1./2; float d = 1./6;
     switch(t){
         case 1: // Quadrangles
-            for (int k=0; k<4; k++) wk[k]=a;
-            for (int k=4; k<8; k++) wk[k]=b;
-            wk[8]= 4*b;
+            for (int k=0; k<4; k++) omegak[k]=a;
+            for (int k=4; k<8; k++) omegak[k]=b;
+            omegak[8]= 4*b;
             xk[0][0]=1; xk[0][1]=0;
             xk[1][0]=1; xk[1][1]=1;
             xk[2][0]=0; xk[2][1]=1;
@@ -25,13 +25,13 @@ void ppquad(int t, int q, float *wk, float **xk){
             xk[8][0]=c; xk[8][1]=c;
             break;
         case 2: // Triangles
-            for (int k= 0; k<3; k++) wk[k]= d;
+            for (int k= 0; k<3; k++) omegakk[k]= d;
             xk[0][0]=c; xk[0][1]=c;
             xk[1][0]=0; xk[1][1]=c;
             xk[2][0]=c; xk[2][1]=0;
             break;
         case 3: // Segment
-            wk[0]= d; wk[1]= d; wk[2]= 2*d;
+            omegak[0]= d; omegak[1]= d; omegak[2]= 2*d;
             xk[0][0]=1;
             xk[1][0]=0;
             xk[2][0]=c;
@@ -59,7 +59,7 @@ void calFbase(int t, float *x_hat, float *w_hat){
         }
 }
 
-void calDerFbase (int t, float **valDerFbx, float *pt){
+void calDerFbase (int t, float *pt, float **valDerFbx,){
     switch(t){
         case 1: // Quadrangle
             valDerFbx[0][0] = 1-pt[1]  ;valDerFbx[0][1] = -pt[0];
@@ -80,14 +80,14 @@ void calDerFbase (int t, float **valDerFbx, float *pt){
 }
 
 void transFk(float *Fbasexhat, float **ak, int p, float *Fkxhat){
-    Fkxhat[0]=0; Fkxhat[1]=0;
+    Fkxhat[0]=0; Fkxhat[1]=0;  
     for (int i=0; i<p; i++){
         Fkxhat[0]+= ak[i][0]*Fbasexhat[i];
         Fkxhat[1]+= ak[i][1]*Fbasexhat[i];
     }
 }
 
-void matJacob(float **JacobFk, float **ak, int d, float **Derfbasexhat, int p){
+void matJacob(float **ak, int d, int p, float **Derfbasexhat, float **JacobFk){
     // On initialise tout à 0
     JacobFk[0][0] = 0; JacobFk[0][1] = 0;
     JacobFk[1][0] = 0; JacobFk[1][1] = 0;
@@ -116,8 +116,8 @@ float invertM2x2 (float **M, float **Minv){
     float inv_det = 1./det;
     Minv[0][0] = M[1][1]*inv_det;
     Minv[1][1] = M[0][0]*inv_det;
-    Minv[1][0] = M[1][0]*inv_det;
-    Minv[0][1] = M[0][1]*inv_det;
+    Minv[1][0] = -M[1][0]*inv_det;
+    Minv[0][1] = -M[0][1]*inv_det;
     return det; 
 }
 

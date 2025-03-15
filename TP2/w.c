@@ -38,5 +38,4 @@ void ADWDW(float **derfctbas, float **cofvar, float eltdif, int nbneel, float **
             }
         }
     }
-
 }

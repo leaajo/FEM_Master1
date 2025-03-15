@@ -18,8 +18,8 @@ void intElem( int t,
             float **coorEl,
             float *omegak,
             float **xhat,
-            float *vecElem,
-            float **matElem){
+            float **matElem,
+            float **vecElem){
 
     //------- Initialisation des variables -------------------------------------------------------------------
     int d =2; // dimension
@@ -34,7 +34,7 @@ void intElem( int t,
     float **dFkxhat; dFkxhat = alloctab(2,2);         // Jacobienne de Fk(x^)
 
     float **dFkxhatinv; dFkxhatinv = alloctab(2,2); // inverse de la matrice D(Fk(x^))
-      float det;                                    // déterminant de celle-ci
+    float det;                                    // déterminant de celle-ci
 
     // Initialisation des coefficients qui nous serviront à remplir matElem et vecElem
     float cofvar_W, cofvar_WW;
