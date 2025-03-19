@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 const float precision = 1e-7;
 
 // FONCTIONS DU TP1
@@ -28,22 +29,22 @@ int **alloctabi(int dim1, int dim2) {
 float **alloctab(int dim1, int dim2) {
   float **ptr;
 
-  ptr = malloc(dim1 * sizeof(float *));
+  ptr = malloc(dim1*sizeof(float *));
   if (ptr != NULL) {
-    int i;
-    float *tmp = malloc(dim1 * dim2 * sizeof(float));  // Allocation de la mémoire pour toutes les lignes
-    if (tmp != NULL) {
-      for (i = 0; i < dim1; i++) {
-        ptr[i] = tmp;     // Assigner le début de chaque ligne
-        tmp += dim2;      // Avancer de dim2 éléments pour la ligne suivante
+      int i, taille_ligne = dim2*sizeof(float);
+      float *tmp = malloc(dim1*taille_ligne);
+      if (tmp != NULL) {
+          for (i=0; i<dim1; i++) {
+              ptr[i] = tmp;
+              tmp += dim2;
+          }
       }
-    }
-    else {
-      free(ptr);
-      ptr = NULL;
-    }
+      else {
+          free(ptr);
+          ptr = NULL;
+      }
   }
-  return ptr;
+  return(ptr);
 }
 
 
@@ -187,7 +188,7 @@ void creation_fichier_maillage(float a, float b, float c, float d,
   fclose(meshfile);
 }
 
-int lecfima(char *ficmai, int *ptypel, int *pnbtng, float ***pcoord, int *pnbtel, int ***pngnel, int *pnbeel, int *pnbaret, float **pnRefAr) {
+int lecfima(char *ficmai, int *ptypel, int *pnbtng, float ***pcoord, int *pnbtel, int ***pngnel, int *pnbeel, int *pnbaret, int ***pnRefAr) {
     // Ouverture du fichier en mode lecture
     FILE* meshfile = fopen(ficmai, "r");
     if (meshfile == NULL) {
@@ -208,7 +209,7 @@ int lecfima(char *ficmai, int *ptypel, int *pnbtng, float ***pcoord, int *pnbtel
 
     // Allocation mémoire pour le numéro global des noeuds de chaque élément + numéro de référence de chaque arête de chaque élément
     *pngnel = alloctabi(*pnbtel, *pnbeel);
-    *pnRefAr = alloctab(*pnbtel, *pnbaret);
+    *pnRefAr = alloctabi(*pnbtel, *pnbaret);
 
     // Remplissage des deux tableaux (en "même" temps):
     for (int i =0; i<*pnbtel; i++){
@@ -216,7 +217,7 @@ int lecfima(char *ficmai, int *ptypel, int *pnbtng, float ***pcoord, int *pnbtel
             fscanf(meshfile, "%d", &(*pngnel)[i][j]);
         }
         for (int j =0; j< *pnbaret; j++){
-            fscanf(meshfile, "%d", pnRefAr[i][j]);
+          fscanf(meshfile, "%d", &(*pnRefAr)[i][j]);  
         }
     }
 
@@ -285,19 +286,28 @@ void calFbase(int t, float *x_hat, float *w_hat){
 void calDerFbase (int t, float *pt, float **valDerFbx){
     switch(t){
         case 1: // Quadrangle
-            valDerFbx[0][0] = 1-pt[1]  ;valDerFbx[0][1] = -pt[0];
-            valDerFbx[1][0] = pt[1]    ;valDerFbx[1][1] = pt[0];
-            valDerFbx[2][0] = -pt[1]   ;valDerFbx[2][1] = 1-pt[0];
-            valDerFbx[3][0] = -1+pt[1] ;valDerFbx[3][1] = pt[0]-1;
+            valDerFbx[0][0] = 1-pt[1]  ;
+            valDerFbx[0][1] = pt[0]*(1-pt[1]);
+            valDerFbx[1][0] = pt[1];
+            valDerFbx[1][1] = pt[0];
+            valDerFbx[2][0] = -pt[1];
+            valDerFbx[2][1] = 1-pt[0];
+            valDerFbx[3][0] = -1+pt[1];
+            valDerFbx[3][1] = pt[0]-1;
             break;
         case 2: // Triangle
-            valDerFbx[0][0] = 1  ;valDerFbx[0][1] = 0;
-            valDerFbx[1][0] = 0  ;valDerFbx[1][1] = 1;
-            valDerFbx[2][0] = -1 ;valDerFbx[2][1] = -1;
+            valDerFbx[0][0] = 1;
+            valDerFbx[0][1] = 0;
+            valDerFbx[1][0] = 0;
+            valDerFbx[1][1] = 1;
+            valDerFbx[2][0] = -1;
+            valDerFbx[2][1] = -1;
             break;
         case 3: // Segment
-            valDerFbx[0][0] = 0   ;valDerFbx[0][1] = 1;
-            valDerFbx[1][0] = -1  ;valDerFbx[1][1] = 0;
+            valDerFbx[0][0] = 0;
+            valDerFbx[0][1] = 1;
+            valDerFbx[1][0] = -1;
+            valDerFbx[1][1] = 0;
             break;
     }
 }
@@ -357,9 +367,9 @@ void numNaret(int typel, int numaret, int *numNeAret){
     }
 }
 
-void selectPts(int nb, const int pts_nb[], float *coordSet[], float *select_coord[]){
+void selectPts(int nb, int num[], float *coorEns[], float *coorSel[]){
     for(int i=0; i<nb; i++) {
-        select_coord[i] = coordSet[pts_nb[i]-1]; 
+        coorSel[i] = coorEns[num[i]-1]; 
     }
 }
 
@@ -423,10 +433,14 @@ void ADWDW(float **derfctbas, float **cofvar, float eltdif, int nbneel, float **
     float coeff; 
 
     for (alpha =0; alpha <2; alpha++){
+
         for (beta = 0; beta <2; beta++){
-            for (int i =0; i<nbneel-1; i++){
+
+            for (int i =0; i<nbneel; i++){
+
                  coeff = eltdif*cofvar[alpha][beta]*derfctbas[i][alpha];
-                 for (int j =0; j<nbneel-1; j++){
+                 for (int j =0; j<nbneel; j++){
+
                     matelem[i][j]= matelem[i][j]+coeff*derfctbas[j][beta];
                  }
             }
@@ -456,37 +470,38 @@ void intElem( int t,
 
     //------- Initialisation des variables -------------------------------------------------------------------
     int d =2; // dimension
-    if (t==1) d=1;
+    if (t==3) d=1;
 
-    float wk[nbneel];                               // calcul de Fkx^
-    float *Fkxhat = malloc(d * sizeof(float));                               // vecteur qui contiendra 
+    float *wk; wk = (float *)malloc(nbneel * sizeof(float));                        // calcul de Fkx^
+    float *Fkxhat = (float *)malloc(d * sizeof(float));                             // vecteur qui contiendra 
 
-    float **dwk; dwk = alloctab(nbneel, d);         // 
-    float **dwkEl; dwkEl = alloctab(nbneel,d);      // pour ADWDW
+    float **dwk = alloctab(nbneel,2);   
+    
+    float **dwkEl = alloctab(nbneel,2);      // pour ADWDW
 
-    float **dFkxhat; dFkxhat = alloctab(2,2);         // Jacobienne de Fk(x^)
+    float **dFkxhat = alloctab(2,2);         // Jacobienne de Fk(x^)
 
-    float **dFkxhatinv; dFkxhatinv = alloctab(2,2); // inverse de la matrice D(Fk(x^))
+    float **dFkxhatinv = alloctab(2,2); // inverse de la matrice D(Fk(x^))
     float det;                                    // déterminant de celle-ci
 
     // Initialisation des coefficients qui nous serviront à remplir matElem et vecElem
     float cofvar_W, cofvar_WW;
-    float **cofvar_ADWDW;  cofvar_ADWDW = alloctab(2,2);
+    float **cofvar_ADWDW = alloctab(2,2);
     float eltdif; 
 
     //----------- Boucle pour le remplissage de matElem et vecElem----------------------------------------------
     for(int k =0; k<q; k++){
 
-        // Calcul de eltdif
-        calDerFbase(t, xhat[k], dwk);
-        matJacob(dwk, d, q, coorEl[k], dFkxhat);
-        det = invertM2x2(dFkxhat, dFkxhatinv);
-        eltdif = omegak[k]*fabsf(det);
-
         // Calcul de cofvar_w
         calFbase(t, xhat[k], wk);
-        transFk(dwk, wk, q, Fkxhat); // pas sûre de celle là, il faut les ak 
+        transFk(wk, coorEl, q, Fkxhat); // pas sûre de celle là, il faut les ak 
         cofvar_W = FOMEGA(Fkxhat);
+
+        // Calcul de eltdif 
+        calDerFbase(t, xhat[k], dwk);
+        matJacob(dwk, d, q, coorEl, dFkxhat);
+        det = invertM2x2(dFkxhat, dFkxhatinv);
+        eltdif = omegak[k]*fabsf(det);
 
         // contribution avec la procédure W
         W(nbneel, wk, eltdif, cofvar_W, vecElem);
@@ -512,9 +527,19 @@ void intElem( int t,
         ADWDW(dwkEl, cofvar_ADWDW, eltdif, nbneel, matElem);
 
         // libération de la mémoire 
-        matrix_free(dwk); matrix_free(dwkEl); free(wk); free(Fkxhat); 
+        
+        matrix_free(dwk);
+        matrix_free(dwkEl); 
+        free(wk);
+        free(Fkxhat);
+        matrix_free(dFkxhat);
+        matrix_free(dFkxhatinv);
+        matrix_free(cofvar_ADWDW);
     }
 }
+
+
+
 
 void cal1Elem(int nRefDom,
                 int nbRefD0,
@@ -527,7 +552,7 @@ void cal1Elem(int nRefDom,
                 int nbneel,
                 float **coorEl,
                 int nbaret,
-                int **nRefArEl,
+                int ***nRefArEl,
                 float **MatElem, float *SMbrElem, int *NuDElem, float *uDElem){
     // Calcul de q
     int q;
@@ -571,3 +596,4 @@ void impCalEl(int K, int typEl, int nbneel, float **MatElem, float *SMbrElem,
     printf("\n");
   }
 }
+

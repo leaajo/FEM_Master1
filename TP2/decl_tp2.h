@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern const float precision;
+
+
 int  **alloctabi(int dim1, int dim2);
 
 float  **alloctab(int dim1, int dim2);
@@ -64,7 +67,7 @@ void cal1Elem(int nRefDom,
                 int nbneel,
                 float **coorEl,
                 int nbaret,
-                int **nRefArEl,
+                int ***nRefArEl,
                 float **MatElem, float *SMbrElem, int *NuDElem, float *uDElem);
 
 void impCalEl(int K, int typEl, int nbneel, float **MatElem, float *SMbrElem,
