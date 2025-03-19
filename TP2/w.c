@@ -39,3 +39,23 @@ void ADWDW(float **derfctbas, float **cofvar, float eltdif, int nbneel, float **
         }
     }
 }
+
+void matJacob(float **ak, int d, int p, float **Derfbasexhat, float **JacobFk){
+    // On initialise tout à 0
+    JacobFk[0][0] = 0; JacobFk[0][1] = 0;
+    JacobFk[1][0] = 0; JacobFk[1][1] = 0;
+    if (d==1){
+        for(int i=0; i<p; i++){
+            JacobFk[0][0] += ak[i][0]* Derfbasexhat[i][0];
+            JacobFk[1][0] += ak[i][1]* Derfbasexhat[i][0];
+        }
+    }
+    if (d==2){
+        for(int i=0; i<p; i++){
+            JacobFk[0][0] += ak[i][0]* Derfbasexhat[i][0];
+            JacobFk[0][1] += ak[i][0]* Derfbasexhat[i][1];
+            JacobFk[1][0] += ak[i][1]* Derfbasexhat[i][0];
+            JacobFk[1][1] += ak[i][1]* Derfbasexhat[i][1];
+        }
+    }
+}

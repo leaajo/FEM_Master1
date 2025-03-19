@@ -13,7 +13,7 @@ void cal1Elem(int nRefDom,
                 int nbneel,
                 float **coorEl,
                 int nbaret,
-                float nRefArEl,
+                float **nRefArEl,
                 float **MatElem, float *SMbrElem, float *NuDElem, float *uDElem){
 
     // Calcul de q
@@ -27,6 +27,6 @@ void cal1Elem(int nRefDom,
     ppquad(typeEl ,q, omegak, xhat);
 
     // à l'intérieur du domaine :
-    intElem(typeEl, q, nbneel, coorEl, omegak, xhat, MatElem, SMbrElem);
+    intElem(typeEl, q, nbneel, &coorEl, omegak, xhat, MatElem, SMbrElem);
 
 }
