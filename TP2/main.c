@@ -43,7 +43,7 @@ int main(){
         cal1Elem(nRefDom, nbRefD0, numRefD0, nbRefD1, numRefD1, nbRefF1, numRefF1, ptypeEl, pnbeel, coorEl, pnbaret, &pnRefArEl,
                  MatElem, SMbrElem, NuDElem, uDElem);
         
-        //impCalEl(K, ptypeEl, pnbeel, MatElem, SMbrElem, NuDElem, uDElem);
+        impCalEl(K, ptypeEl, pnbeel, MatElem, SMbrElem, NuDElem, uDElem);
     }
     return 0;
 }
