@@ -16,7 +16,8 @@ int main(){
     numRefF1 = malloc(2*sizeof(float));
 
 
-    char* ficmai = "car1x1t_1";
+    //char* ficmai = "car3x3t_3";
+    char ficmai[] = "car1x1t_1.txt"; 
     int ptypeEl, pnbtng, pnbtel, pnbeel, pnbaret;
     int **pngnel;
     int **pnRefArEl;
@@ -40,8 +41,9 @@ int main(){
 
         selectPts(pnbeel, NB, coorAll, coorEl);
 
-        cal1Elem(nRefDom, nbRefD0, numRefD0, nbRefD1, numRefD1, nbRefF1, numRefF1, ptypeEl, pnbeel, coorEl, pnbaret, &pnRefArEl,
-                 MatElem, SMbrElem, NuDElem, uDElem);
+        cal1Elem(nRefDom, nbRefD0, numRefD0, nbRefD1, numRefD1, nbRefF1, numRefF1, 
+                ptypeEl, pnbeel, coorEl, pnbaret, &pnRefArEl,
+                MatElem, SMbrElem, NuDElem, uDElem);
         
         impCalEl(K, ptypeEl, pnbeel, MatElem, SMbrElem, NuDElem, uDElem);
     }

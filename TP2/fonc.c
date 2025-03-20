@@ -220,7 +220,7 @@ int lecfima(char *ficmai, int *ptypel, int *pnbtng, float ***pcoord, int *pnbtel
           fscanf(meshfile, "%d", &(*pnRefAr)[i][j]);  
         }
     }
-
+    //matrix_free_int(pnRefAr);
     fclose(meshfile);
     return 0;
 }
@@ -272,9 +272,9 @@ void calFbase(int t, float *x_hat, float *w_hat){
             w_hat[3] = (1-x_hat[0])*(1-x_hat[1]);
             break;
         case 2: // Triangle   
-            w_hat[0] = x_hat[0]*(1-x_hat[1]); //x_hat[0]; //x_hat[0]*(1-x_hat[1]);
-            w_hat[1] = (1-x_hat[0])*x_hat[1]; //x_hat[1]; //(1-x_hat[0])*x_hat[1];
-            w_hat[2] = 1 - x_hat[1]-x_hat[2];
+            w_hat[0] = x_hat[0];
+            w_hat[1] = x_hat[1];
+            w_hat[2] = 1 - x_hat[0]-x_hat[1];
             break;
         case 3: // Segment
             w_hat[0] = x_hat[0];
@@ -304,10 +304,8 @@ void calDerFbase (int t, float *pt, float **valDerFbx){
             valDerFbx[2][1] = -1;
             break;
         case 3: // Segment
-            valDerFbx[0][0] = 0;
-            valDerFbx[0][1] = 1;
+            valDerFbx[0][0] = 1;
             valDerFbx[1][0] = -1;
-            valDerFbx[1][1] = 0;
             break;
         default:
             fprintf(stderr, "Erreur : t doit être 1, 2 ou 3\n");
@@ -396,7 +394,7 @@ float a22 (float *x){
 }
 
 float a00 (float *x){
-    return 1;
+    return 0;
 }
 
 float a12 (float *x){
@@ -412,7 +410,7 @@ float FOMEGA (float *x){
 }
 
 float FN (float *x){
-    return 1;
+    return 0;
 }
 
 float UD (float *x){
@@ -431,13 +429,13 @@ void WW (int nbneel, float *fctbas, float eltdif, float cofvar, float **matelem)
     }
 }
 
-void W (int nbneel, float *fctbas, float eltdif, float cofvar, float *matelem){
+void W (int nbneel, float *fctbas, float eltdif, float cofvar, float *vecElem){
     int i;
     float coeff;
 
     for (i=0; i<nbneel; i++){
         coeff = eltdif* cofvar* fctbas[i];
-        matelem[i]= matelem[i]+coeff;      
+        vecElem[i]= vecElem[i]+coeff;      
     }
 }
 
@@ -488,14 +486,14 @@ void intElem( int t,
     float *wk; wk = (float *)malloc(nbneel * sizeof(float));                        // calcul de Fkx^
     float *Fkxhat = (float *)malloc(2 * sizeof(float));                             // vecteur qui contiendra 
 
-    float **dwk = alloctab(nbneel,2);   
+    float **valDerFbx = alloctab(nbneel,2);   
 
     float **dwkEl = alloctab(nbneel,2);      // pour ADWDW
 
-    float **dFkxhat = alloctab(2,2);         // Jacobienne de Fk(x^)
+    float **dFkxhat = alloctab(2,2);                   // Jacobienne de Fk(x^)
 
-    float **dFkxhatinv = alloctab(2,2); // inverse de la matrice D(Fk(x^))
-    float det;                                    // déterminant de celle-ci
+    float **dFkxhatinv = alloctab(2,2);                // inverse de la matrice D(Fk(x^))
+    float det;                                         // déterminant de celle-ci
 
     // Initialisation des coefficients qui nous serviront à remplir matElem et vecElem
     float cofvar_W, cofvar_WW;
@@ -508,12 +506,12 @@ void intElem( int t,
 
         // Calcul de cofvar_w
         calFbase(t, xhat[k], wk);
-        transFk(wk, coorEl, q, Fkxhat); // pas sûre de celle là, il faut les ak 
+        transFk(wk, coorEl, q, Fkxhat); 
         cofvar_W = FOMEGA(Fkxhat);
 
         // Calcul de eltdif 
-        calDerFbase(t, xhat[k], dwk);
-        matJacob(dwk, d, q, coorEl, dFkxhat);
+        calDerFbase(t, xhat[k], valDerFbx);
+        matJacob(coorEl,d, q,valDerFbx, dFkxhat);
         det = invertM2x2(dFkxhat, dFkxhatinv);
         eltdif = omegak[k]*fabsf(det);
 
@@ -527,14 +525,14 @@ void intElem( int t,
         WW(nbneel, wk, eltdif, cofvar_WW, matElem); 
 
         // calcul de cofvar_ADWDW
-        cofvar_ADWDW[0][0]= a00(Fkxhat);
+        cofvar_ADWDW[0][0]= a11(Fkxhat);
         cofvar_ADWDW[0][1]= a12(Fkxhat);
         cofvar_ADWDW[1][0]= a12(Fkxhat); 
         cofvar_ADWDW[1][1]= a22(Fkxhat);
 
         for (int i=0; i<nbneel; i++){
-            dwkEl[i][0] = dwk[i][0]*dFkxhatinv[0][0] + dwk[i][1]*dFkxhatinv[1][0];
-            dwkEl[i][1] = dwk[i][1]*dFkxhatinv[0][1] + dwk[i][1]*dFkxhatinv[1][1];
+            dwkEl[i][0] = valDerFbx[i][0]*dFkxhatinv[0][0] + valDerFbx[i][1]*dFkxhatinv[1][0];
+            dwkEl[i][1] = valDerFbx[i][0]*dFkxhatinv[0][1] + valDerFbx[i][1]*dFkxhatinv[1][1];
         }
 
         // contribution avec la procédure ADWDW 
@@ -542,17 +540,15 @@ void intElem( int t,
     }
 
     // libération de la mémoire     
-    matrix_free(dwk);
+    matrix_free(valDerFbx);
     matrix_free(dwkEl); 
     free(wk);
     free(Fkxhat);
     matrix_free(dFkxhat);
     matrix_free(dFkxhatinv);
     matrix_free(cofvar_ADWDW);
+
 }
-
-
-
 
 void cal1Elem(int nRefDom,
                 int nbRefD0,
@@ -567,6 +563,15 @@ void cal1Elem(int nRefDom,
                 int nbaret,
                 int ***nRefArEl,
                 float **MatElem, float *SMbrElem, int *NuDElem, float *uDElem){
+
+    for (int i = 0; i<nbneel; i++){
+        for (int j = 0; j<nbneel; j++){
+            MatElem[i][j]=0;
+        } 
+        SMbrElem[i]=0;
+        NuDElem[i]=1;
+        uDElem[i]=0;   
+    }
     // Calcul de q
     int q;
     q = nppquad(typeEl);

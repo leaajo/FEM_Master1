@@ -13,22 +13,21 @@
 
 void intAret( int t,
             int q,
-            int nbneel,
-            float **coorEl,
+            int nbnAr,
+            float **coorAr,
             float *omegak,
             float **xhat,
-            float **matElem,
-            float **vecElem){
+            float **matAret,
+            float **vecAret){
 
     //------- Initialisation des variables -------------------------------------------------------------------
-    int d =2; // dimension
-    if (t==1) d=1;
+    int d =1;
 
-    float wk[nbneel];                               // calcul de Fkx^
+    float wk[nbnAr];                               // calcul de Fkx^
     float Fkxhat[d];                                // vecteur qui contiendra 
 
-    float **dwk; dwk = alloctab(nbneel, d);         // 
-    float **dwkEl; dwkEl = alloctab(nbneel,d);      // pour ADWDW
+    float **dwk; dwk = alloctab(nbnAr, d);         // 
+    float **dwkEl; dwkEl = alloctab(nbnAr,d);      // pour ADWDW
 
     float **dFkxhat; dFkxhat = alloctab(2,2);         // Jacobienne de Fk(x^)
 
@@ -44,25 +43,22 @@ void intAret( int t,
 
         // Calcul de eltdif
         calDerFbase(t, xhat[k], dwk);
-        matJacob(q,d, dwk, coorEl[k], dFkxhat);
+        matJacob(q,d, dwk, coorAr[k], dFkxhat);
         det = invertM2x2(dFkxhat, dFkxhatinv);
-        eltdif = omegak[k]*absf(det);
+        eltdif = omegak[k]*sqrtf(dFkxhat[0][0] * dFkxhat[0][0] + dFkxhat[1][0] * dFkxhat[1][0]);
 
         // Calcul de cofvar_w
         calFbase(t, xhat[k], wk);
-        transFk(q, wk, coorEl, Fkxhat);
+        transFk(q, wk, coorAr, Fkxhat);
         cofvar_W = FN(Fkxhat);
 
         // contribution avec la procédure W
-        W(nbneel, wk, eltdif, cofvar_W, vecElem);
+        W(nbnAr, wk, eltdif, cofvar_W, vecAret);
 
         // calcul de cofvar_ww
         cofvar_WW = BN(Fkxhat);
 
         // contribution avec la procédure WW
-        WW(nbneel, wk, eltdif, cofvar_WW, matElem); 
-
-        // libération de la mémoire 
-        free(dwk); free(dwkEl); free(wk); free(Fkxhat); 
+        WW(nbnAr, wk, eltdif, cofvar_WW, matAret); 
     }
 }
