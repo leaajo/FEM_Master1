@@ -1,12 +1,12 @@
 Numero de la formule de quadrature : -2
 Nom du fichier de maillage : car3x3
  (18 triangles dans [0,3]x[0,3])		    3
-Numeros de references : 			 -------
+Numeros de references : 			      -------
  bord 1 : 1 (Dirichlet homogene)		|       |
- bord 2 : 2 (Neumann)			      4 |   0   | 2
+ bord 2 : 2 (Neumann)			   4 |   0   | 2
  bord 3 : 3 (Neumann)				|       |
- bord 4 : 4 (Dirichlet non homogene)		 -------
-						    1
+ bord 4 : 4 (Dirichlet non homogene)     -------
+						              1
 A_ij = DELTA_ij, FOMEGA = 1, UD = 100*x + y
 
 1. A_00 = 0, BN = 0, FN = 0

@@ -4,7 +4,7 @@
 
 const float precision = 1e-7;
 
-// FONCTIONS DU TP1
+// FONCTIONS DU TP1 ----------------------------------------------------------------------------------
 int **alloctabi(int dim1, int dim2) {
   int **ptr;
 
@@ -225,7 +225,7 @@ int lecfima(char *ficmai, int *ptypel, int *pnbtng, float ***pcoord, int *pnbtel
     return 0;
 }
 
-// FONCTIONS DU TP2 A
+// FONCTIONS DU TP2 A-----------------------------------------------------------------------
 int nppquad(int t){
     if (t==1) return 9;
     return 3;
@@ -236,7 +236,7 @@ void ppquad(int t, int q, float *omegak, float **xk){
     switch(t){
         case 1: // Quadrangles
             for (int k=0; k<4; k++) omegak[k]=a;
-            for (int k=4; k<8; k++) omegak[k]=b;
+            for (int k=4; k<q; k++) omegak[k]=b;
             omegak[8]= 4*b;
             xk[0][0]=1; xk[0][1]=0;
             xk[1][0]=1; xk[1][1]=1;
@@ -249,7 +249,7 @@ void ppquad(int t, int q, float *omegak, float **xk){
             xk[8][0]=c; xk[8][1]=c;
             break;
         case 2: // Triangles
-            for (int k= 0; k<3; k++) omegak[k]= d;
+            for (int k= 0; k<q; k++) omegak[k]= d;
             xk[0][0]=c; xk[0][1]=c;
             xk[1][0]=0; xk[1][1]=c;
             xk[2][0]=c; xk[2][1]=0;
@@ -369,11 +369,11 @@ void numNaret(int typel, int numaret, int *numNeAret){
     switch(typel){
         case 1: // Quadrangles
             numNeAret[0] = numaret;
-            numNeAret[1] = (numaret+1)%4;
+            numNeAret[1] = (numaret%4) +1;
             break;
         case 2: // Triangle
             numNeAret[0] = numaret;
-            numNeAret[1] = (numaret+1)%3;
+            numNeAret[1] = (numaret%3) +1;
             break;
     }
 }
@@ -394,7 +394,7 @@ float a22 (float *x){
 }
 
 float a00 (float *x){
-    return 0;
+    return 1;
 }
 
 float a12 (float *x){
@@ -402,7 +402,7 @@ float a12 (float *x){
 }
 
 float bN (float *x){
-    return 0;
+    return 1;
 }
 
 float FOMEGA (float *x){
@@ -410,7 +410,7 @@ float FOMEGA (float *x){
 }
 
 float FN (float *x){
-    return 0;
+    return 1;
 }
 
 float UD (float *x){
@@ -471,7 +471,6 @@ void ADWDW(float **derfctbas, float **cofvar, float eltdif, int nbneel, float **
 // @matElem   : calcul et stock de l'intégrale issu de WW et ADWDW
 
 void intElem( int t,
-            int q,
             int nbneel,
             float **coorEl,
             float *omegak,
@@ -482,6 +481,8 @@ void intElem( int t,
     //------- Initialisation des variables -------------------------------------------------------------------
     int d =2; // dimension
     if (t==3) d=1;
+
+    int q = nppquad(t); 
 
     float *wk; wk = (float *)malloc(nbneel * sizeof(float));                        // calcul de Fkx^
     float *Fkxhat = (float *)malloc(2 * sizeof(float));                             // vecteur qui contiendra 
@@ -550,20 +551,74 @@ void intElem( int t,
 
 }
 
+void intAret(int t,
+            int nbnAr,
+            float **xhat,
+            float *omegak,
+            float **coorAr,
+            float **matAret,
+            float *vecAret){
+
+    //------- Initialisation des variables -------------------------------------------------------------------
+    int d =1;
+
+    int q = nppquad(t); 
+
+    float *wk; wk = (float *)malloc(nbnAr * sizeof(float));                        // calcul de Fkx^
+    float *Fkxhat = (float *)malloc(2 * sizeof(float));                             // vecteur qui contiendra 
+
+    float **valDerFbx = alloctab(nbnAr,1);   
+
+    float **dFkxhat = alloctab(2,1);                   // Jacobienne de Fk(x^)
+
+    // Initialisation des coefficients qui nous serviront à remplir matAret et vecAret
+    float cofvar_W, cofvar_WW;
+    float eltdif; 
+
+    //----------- Boucle pour le remplissage de matElem et vecElem----------------------------------------------
+    for(int k =0; k<q; k++){
+
+        // Calcul de eltdif
+        calDerFbase(t, xhat[k], valDerFbx);
+        matJacob(coorAr, d, nbnAr, valDerFbx, dFkxhat);
+        eltdif = omegak[k]*sqrtf(dFkxhat[0][0] * dFkxhat[0][0] + dFkxhat[1][0] * dFkxhat[1][0]);
+
+        // Calcul de cofvar_w
+        calFbase(t, xhat[k], wk);
+        transFk(wk, coorAr, nbnAr, Fkxhat);
+        cofvar_W = FN(Fkxhat);
+
+        // contribution avec la procédure W
+        W(nbnAr, wk, eltdif, cofvar_W, vecAret);
+
+        // calcul de cofvar_ww
+        cofvar_WW = bN(Fkxhat);
+
+        // contribution avec la procédure WW
+        WW(nbnAr, wk, eltdif, cofvar_WW, matAret); 
+    }
+     // libération de la mémoire     
+    matrix_free(valDerFbx);
+    free(wk);
+    free(Fkxhat);
+    matrix_free(dFkxhat);
+}
+
 void cal1Elem(int nRefDom,
                 int nbRefD0,
-                float* numRefD0,
+                int* numRefD0,
                 int nbRefD1,
-                float *numRefD1,
+                int *numRefD1,
                 int nbRefF1,
-                float *numRefF1,
+                int *numRefF1,
                 int typeEl,
                 int nbneel,
                 float **coorEl,
                 int nbaret,
-                int ***nRefArEl,
+                int *nRefArEl, 
                 float **MatElem, float *SMbrElem, int *NuDElem, float *uDElem){
 
+    // Initialisation à 0 des sorties de cal1Elem
     for (int i = 0; i<nbneel; i++){
         for (int j = 0; j<nbneel; j++){
             MatElem[i][j]=0;
@@ -576,15 +631,81 @@ void cal1Elem(int nRefDom,
     int q;
     q = nppquad(typeEl);
 
-    // calcul de xhat et omega k
-    float **xhat;  xhat = alloctab(q,2);
-    float *omegak= malloc(q* sizeof(float));
-
-    ppquad(typeEl ,q, omegak, xhat);
+    // calcul de xhat et omega k Elem (pour le calcul de intElem) 
+    float **xhat_elem;  xhat_elem = alloctab(q,2);
+    float *omegakElem = (float*)malloc(3*sizeof(float*));
+    ppquad(typeEl ,q, omegakElem, xhat_elem);
 
     // à l'intérieur du domaine :
-    intElem(typeEl, q, nbneel, coorEl, omegak, xhat, MatElem, SMbrElem);
+    intElem(typeEl, nbneel, coorEl, omegakElem, xhat_elem, MatElem, SMbrElem);
 
+    // libération de la mémoire 
+    matrix_free(xhat_elem); free(omegakElem);
+
+    // calcul de xhat et omega k Aret (pour le calcul de intAret)
+    int q_ar = nppquad(3); // on sait déjà que ça vaut 3 pour les segments mais on effectue le nppquad pour un rappel de la nature de l'objet
+    float **xhat_ar = alloctab(q_ar,2);
+    float *omegak_ar = malloc(q_ar*sizeof(float));
+    ppquad(3,3,omegak_ar, xhat_ar);
+
+    float **coorAr= alloctab(2,2);
+
+    for(int i=0; i<nbaret; i++){
+
+        // On récupère les coordonnées des noeuds liés à l'arête i :
+         int *numNeAret = (int*)malloc(2*sizeof(int));
+         numNaret(typeEl, i+1, numNeAret);
+         selectPts(2, numNeAret, coorEl, coorAr);
+
+        if (nRefArEl[i]!=nRefDom){ // Si le numéro de référence de l'arête i n'est pas à l'intérieur du domaine, 
+                                   // il faut regarder à quelle condition appartient cette arête
+        for (int l=0; l<2; l++){
+            for (int j= 0; j<nbRefD0; j++){ // COÒNDITION DE DIRICHLET HOMOGÈNE 
+                if (nRefArEl[i]==numRefD0[j]){
+                    NuDElem[numNeAret[l]-1]=0;
+                }
+            }
+            for (int j= 0; j<nbRefD1; j++){ // CONDITION DE DIRICHLET NON HOMOGÈNE 
+                if (nRefArEl[i]==numRefD1[j]){
+                    NuDElem[numNeAret[l]-1]=-1;
+                    uDElem[numNeAret[l]-1] = UD(coorAr[l]);
+                }
+            }
+         }
+        }
+        for (int j=0; j<nbRefF1; j++) {
+            if (nRefArEl[i]==numRefF1[j]){  // CONDITION DE NEUMANN OU FOURIER
+
+                // On initialise MatAret et vecAret à O 
+                float **MatAret = alloctab(nbneel, nbneel);
+                float *vecAret = (float*)malloc(nbneel*sizeof(float));
+
+                for (int k=0; k<nbneel; k++){
+                    vecAret[k]=0;
+                    for (int l=0; l<nbneel; l++){
+                        MatAret[k][l]=0;
+                    }
+                }
+
+                intAret(3, 2, xhat_ar, omegak_ar, coorAr, MatAret, vecAret);
+
+                // On rajoute les résultats obtenus (contenus dans MatAret et vecAret) à MatElem et SMbrElem :
+                for (int k= 0; k<2; k++){
+                    int nk = numNeAret[k]-1;
+                    SMbrElem[nk] += vecAret[k];
+                    for (int l = 0; l<2; l++){
+                        int nl = numNeAret[l]-1;
+                        MatElem[nk][nl] += MatAret[k][l];
+                    }
+                
+                }
+                // libération de la mémoire
+                matrix_free(MatAret); free(vecAret);
+            }
+          }
+          free(numNeAret);
+    }
+    free(omegak_ar); matrix_free(xhat_ar);
 }
 
 void impCalEl(int K, int typEl, int nbneel, float **MatElem, float *SMbrElem,
@@ -615,3 +736,59 @@ void impCalEl(int K, int typEl, int nbneel, float **MatElem, float *SMbrElem,
   }
 }
 
+int lecture_conditions_bords(char *ficmai, int **numRefD0, int **numRefD1, int **numRefF1, 
+                             int *nbRefD0, int *nbRefD1, int *nbRefF1, int *nRefDom) {
+    // Ouverture du fichier en mode lecture
+    FILE *ref_file = fopen(ficmai, "r");
+    if (ref_file == NULL) {
+        printf("Erreur : Impossible d'ouvrir le fichier %s\n", ficmai);
+        return -1;
+    }
+
+    // Lecture du numéro de référence associé au domaine
+    fscanf(ref_file, "%d", nRefDom);
+
+    // Lecture et allocation pour numRefD0
+    fscanf(ref_file, "%d", nbRefD0); 
+    *numRefD0 = malloc((*nbRefD0) * sizeof(int));
+    if (*numRefD0 == NULL) {
+        printf("Erreur d'allocation pour numRefD0\n");
+        fclose(ref_file);
+        return -1;
+    }
+    for (int i = 0; i < *nbRefD0; i++) {
+        fscanf(ref_file, "%d", &((*numRefD0)[i]));
+    }
+
+    // Lecture et allocation pour numRefD1
+    fscanf(ref_file, "%d", nbRefD1); 
+    *numRefD1 = malloc((*nbRefD1) * sizeof(int));
+    if (*numRefD1 == NULL) {
+        printf("Erreur d'allocation pour numRefD1\n");
+        free(*numRefD0);
+        fclose(ref_file);
+        return -1;
+    }
+    for (int i = 0; i < *nbRefD1; i++) {
+        fscanf(ref_file, "%d", &((*numRefD1)[i]));
+    }
+
+    // Lecture et allocation pour numRefF1
+    fscanf(ref_file, "%d", nbRefF1); 
+    *numRefF1 = malloc((*nbRefF1) * sizeof(int));
+    if (*numRefF1 == NULL) {
+        printf("Erreur d'allocation pour numRefF1\n");
+        free(*numRefD0);
+        free(*numRefD1);
+        fclose(ref_file);
+        return -1;
+    }
+    for (int i = 0; i < *nbRefF1; i++) {
+        fscanf(ref_file, "%d", &((*numRefF1)[i]));
+    }
+
+    // Fermeture du fichier
+    fclose(ref_file);
+
+    return 0;
+}

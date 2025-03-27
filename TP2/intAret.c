@@ -26,13 +26,10 @@ void intAret( int t,
     float wk[nbnAr];                               // calcul de Fkx^
     float Fkxhat[d];                                // vecteur qui contiendra 
 
-    float **dwk; dwk = alloctab(nbnAr, d);         // 
-    float **dwkEl; dwkEl = alloctab(nbnAr,d);      // pour ADWDW
+    float **dwk; dwk = alloctab(q, 2);         // 
+    float **dwkEl; dwkEl = alloctab(q,2);      // pour ADWDW
 
     float **dFkxhat; dFkxhat = alloctab(2,2);         // Jacobienne de Fk(x^)
-
-    float **dFkxhatinv; dFkxhatinv = alloctab(2,2); // inverse de la matrice D(Fk(x^))
-    float det;                                    // déterminant de celle-ci
 
     // Initialisation des coefficients qui nous serviront à remplir matElem et vecElem
     float cofvar_W, cofvar_WW;
@@ -44,7 +41,6 @@ void intAret( int t,
         // Calcul de eltdif
         calDerFbase(t, xhat[k], dwk);
         matJacob(q,d, dwk, coorAr[k], dFkxhat);
-        det = invertM2x2(dFkxhat, dFkxhatinv);
         eltdif = omegak[k]*sqrtf(dFkxhat[0][0] * dFkxhat[0][0] + dFkxhat[1][0] * dFkxhat[1][0]);
 
         // Calcul de cofvar_w

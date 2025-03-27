@@ -55,20 +55,30 @@ void intElem( int t,
             float **xhat,
             float **matElem,
             float *vecElem);
+
+void intAret(int t,
+            int nbnAr,
+            float **xhat,
+            float *omegak,
+            float **coorAr,
+            float **matAret,
+            float *vecAret);
             
 void cal1Elem(int nRefDom,
                 int nbRefD0,
-                float* numRefD0,
+                int* numRefD0,
                 int nbRefD1,
-                float *numRefD1,
+                int *numRefD1,
                 int nbRefF1,
-                float *numRefF1,
+                int *numRefF1,
                 int typeEl,
                 int nbneel,
                 float **coorEl,
                 int nbaret,
-                int ***nRefArEl,
+                int *nRefArEl,
                 float **MatElem, float *SMbrElem, int *NuDElem, float *uDElem);
 
 void impCalEl(int K, int typEl, int nbneel, float **MatElem, float *SMbrElem,
               int *NuDElem, float *uDElem);
+
+int lecture_conditions_bords(char *ficmai, int** numRefD0, int** numRefD1, int** numRefF1, int *nbRefD0, int *nbRefD1, int *nbRefF1, int *nRefDom);
